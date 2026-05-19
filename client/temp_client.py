@@ -1,27 +1,36 @@
-import socket               # Import socket module
+#distributed-file-system/client/temp_client.py
+import socket
 
-s = socket.socket()         # Create a socket object
-host = 'Dhruvs-Macbook-Pro.local' # Get local machine name
-port = 12345                # Reserve a port for your service.
+s = socket.socket()
+
+host = 'localhost'
+port = 12345
 
 s.connect((host, port))
 
 data = s.recv(1024)
-print 'Client received', repr(data)
 
-# send filename and extension and then open file to be read and sent
+print("Client received:", data.decode())
+
+# send filename and extension
 filename = 'SDCI'
 extension = '.pdf'
 
-s.send(filename + extension + '\n')
+s.send((filename + extension + '\n').encode())
 
-f = open(filename + extension, 'rb')
-l = f.read(1024)    # read 1024 bytes of data
-while (l):
-    s.send(l)
-    print 'Sent', repr(l)
-    l = f.read(1024)
-f.close()
+with open(filename + extension, 'rb') as f:
 
-print 'Done sending'
+    while True:
+
+        l = f.read(1024)
+
+        if not l:
+            break
+
+        s.send(l)
+
+        print("Sent chunk")
+
+print("Done sending")
+
 s.close()

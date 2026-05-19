@@ -1,53 +1,62 @@
-import sys, socket, time
+#distributed-file-system/client/fetch.py
+import sys
+import socket
 
-s = socket.socket()         # Create a socket object
-host = 'Dhruvs-Macbook-Pro.local' # Get local machine name
-port = 12346                # Reserve a port for your service.
+s = socket.socket()
+
+host = 'localhost'
+port = 12346
+
 s.connect((host, port))
 
 data = s.recv(1024)
-print "\nMessage from server:", repr(data)
+print("\nMessage from server:", data.decode())
 
-file_to_fetch = None
+if len(sys.argv) == 1:
 
-if len(sys.argv) == 1:       # fetching the log (list of files in the nodes)
-	# send fetch command
-	s.send("1")
+    # fetch file list
+    s.send("1".encode())
 
-	while True:
-		data = s.recv(1024)
-		if not data:
-			break
-		print data
+    while True:
+        data = s.recv(1024)
 
-	# print 'Index received'
+        if not data:
+            break
 
-else:                        # fetching the file asked by the client
-	file_to_fetch = sys.argv[1]
+        print(data.decode())
 
-	# send fetch file command
-	s.send("0")
+else:
 
-	s.send(file_to_fetch + '\n')
+    # fetch specific file
+    file_to_fetch = sys.argv[1]
 
-	exists = s.recv(1024)
+    s.send("0".encode())
 
-	if exists == 'yes':
-		with open('target_folder/' + file_to_fetch, 'wb') as f:
-			# print file_to_fetch, 'opened'
+    s.send((file_to_fetch + '\n').encode())
 
-			while True:
-				data = s.recv(1024)
-				if not data:
-					break
-				f.write(data)
+    exists = s.recv(1024).decode()
 
-		print 'Successfully received', file_to_fetch, 'in the target_folder/\n'
-	elif exists == 'no':
-		message = 'This file does not exist on the server.'
-		print message
-	else:
-		message = 'This file is currently being updated. Please try again later.'
-		print message
+    if exists == 'yes':
+
+        with open('target_folder/' + file_to_fetch, 'wb') as f:
+
+            while True:
+                data = s.recv(1024)
+
+                if not data:
+                    break
+
+                f.write(data)
+
+        print("Successfully received", file_to_fetch,
+              "in target_folder/")
+
+    elif exists == 'no':
+
+        print("This file does not exist on the server.")
+
+    else:
+
+        print("This file is currently being updated. Please try again later.")
 
 s.close()
